@@ -41,55 +41,65 @@ Nd *getNd()
 	printf("输入指数:");
 	scanf("%d",&zcount);
 
-	//申请内存空间
 	if( (pnew=(Nd *)malloc( sizeof(Nd) ) ) == NULL){
 		printf("申请内存错误\n");
 		exit(-1);
 	}
+
 	pnew->xcount=xcount;
 	pnew->zcount=zcount;
-
 	pnew->next=NULL;
+
 	return pnew;
 }
+void insert_list(Nd ** head, Nd **pnew)
+{
+	Nd *pre=NULL;
+	pre=*head;
+	while(pre->next != NULL && (pre->next)->zcount < (*pnew)->zcount ){
+		pre = pre->next;
+	}
+	
+	if(pre->next == NULL){						//直接在尾巴插入
 
+		pre->next=*pnew;
+		pre=*pnew;
+		pre->next=NULL;
+	}else if((pre->next)->zcount == (*pnew)->zcount ){
+		
+		(pre->next)->xcount +=(*pnew)->xcount;
+	}else{
+		
+		(*pnew)->next=pre->next;
+		pre->next=(*pnew);
+	}
+		
+}
 Nd *createlist()
 {
-	Nd *head=NULL;						//头结点
-	Nd *pnew=NULL, *tail=NULL;			//新申请的和尾结点
-	Nd *check=NULL;						//用于找正确插入位置的结点
+	Nd *head=NULL;								//头结点
+	Nd *pnew=NULL;								//新申请的和尾结点
 	
-	head=(Nd *)malloc(sizeof(Nd));		//建立头结点
+	head=(Nd *)malloc(sizeof(Nd));				//建立头结点
 	head->xcount=0;
 	head->next=NULL;
 
-	pnew=getNd();
-	if(pnew != NULL)	head->next=pnew;//将头结点和后面的连接起来
-
+	pnew=getNd();		pnew->next=NULL;
+	if(pnew != NULL)	head->next=pnew;		//将头结点和后面的连接起来
+	
+	pnew=getNd();								//重新申请
 	while(pnew != NULL)
-	{
-		check=head;
-		//遍历，找插入新结点的地方
-		while(check->next != NULL && (check->next)->xcount <= pnew->xcount){
-			check=check->next;
-		}
-
-		//如果循环到尾巴就直接在尾巴插入，否则在中间插入
-		if(check->next == NULL){
-			check->next=pnew;
-			check=pnew;
-			check->next=NULL;
-		}else{
-			pnew->next=check->next;
-			check->next=pnew;
-		}
-		pnew=getNd();				//重新申请
+	{	
+		insert_list(&head, &pnew);				//插入新数据到已有链表中
+		pnew=getNd();	
 	}
+
+	free(pnew);
 	return head;
 }
 
-//输出链表函数
-void printlist(Nd *head)
+
+void printlist(Nd *head)						//输出数据函数
 {
 	Nd *p=head->next;
 	while( p != NULL){
@@ -98,7 +108,8 @@ void printlist(Nd *head)
 	}
 }
 
-Nd * add_poly(Nd *headA, Nd *headB)
+
+Nd * add_poly(Nd *headA, Nd *headB)				//多项式相加函数
 {
 	Nd *headC=NULL, *tail=NULL, *pnew=NULL;
 	headA=headA->next;
@@ -173,65 +184,38 @@ Nd * add_poly(Nd *headA, Nd *headB)
 
 }
 
-Nd *multi(Nd *headA,Nd *headB)
+Nd *multi(Nd *headA,Nd *headB)									//多项式相乘函数
 {
-	Nd *trav1=headA->next, *trav2=NULL;
+	Nd *trav1=headA->next, *trav2=NULL;							//两条链表循环
+	Nd *headC=NULL;												//c链表的头结点
+	Nd *pnew=NULL;												//用于创建一条相乘结果的链表C
 
-	Nd *headC=NULL;					//c链表的头结点
-	Nd *pnew=NULL;					//用于创建一条相乘结果的链表C
-	Nd *pre=NULL;					//临时保存乘下来的结果
-
-	headC=(Nd *)malloc(sizeof(Nd));
-
-	if(headC == NULL){
-		printf("申请内存错误\n");
-		exit(-1);
+	if( (headC=(Nd *)malloc(sizeof(Nd))) == NULL){
+		printf("内存申请错误\n");	exit(-1);
 	}
 	headC->zcount=0;
 	headC->next=NULL;
-	//tail=headC
 
 	while(trav1 != NULL){
-
+		
 		trav2=headB->next;
-		while(trav2 != NULL){
-			//给一个结点申请内存空间并赋初始值
+		while(trav2 != NULL){	
+			
 			pnew=(Nd *)malloc(sizeof(Nd));
 			pnew->next=NULL;
-			pnew->xcount = trav1->xcount * trav2->xcount;
+
+			pnew->xcount = trav1->xcount * trav2->xcount;		//给要插入的结点赋值
 			pnew->zcount = trav1->zcount + trav2->zcount;
 
-			pre=headC;
-
-			//遍历找插入计算结果的位置
-			while(pre->next != NULL && (pre->next)->zcount < pnew->zcount ){
-				pre=pre->next;
-			}
-
-			//如果前面所有结点的指数没有 或者没有比pnew指数大
-			if(headC->next == NULL){
-				headC->next=pnew;
-			}
-			//如果找到指数相同的结点
-			else if( pre->next != NULL && (pre->next)->zcount == pnew->zcount ){
-			( (pre->next)->xcount ) += (pnew->xcount);
-				//free(pnew);
-			}	
-			//如果找到结点的指数大于pnew的指数则将pnew插入
-			else{
-				pnew->next=pre->next;
-				pre->next=pnew;
-			}
-
+			insert_list(&headC, &pnew);							//插入新数据到C链表中
 			trav2=trav2->next;
 		}
-
 		trav1=trav1->next;
 	}
 
 	return headC;
-
 }
+
 int main(void)
 {
 	Nd *headA=NULL;
@@ -239,16 +223,22 @@ int main(void)
 	Nd *headC=NULL;
 
 	headA=createlist();
+	printf("原链表:\n");
 	printlist(headA);
 	
 	headB=createlist();
+	printf("原链表:\n");
 	printlist(headB);
 
 	printf("===============\n\n");
 
-	
+	printf("多项式相加的结果\n\n");
+	headC=add_poly(headA, headB);
+	printlist(headC);
+
+
+	printf("\n\n多项式相乘的结果\n");
 	headC=multi(headA,headB);
-	//headC=add_poly(headA, headB);
 	printlist(headC);
 
 
