@@ -34,6 +34,7 @@
 #define GET_ALLOC(p) (GET(p) & 0x1)		//从地址p处的头部或尾部返回已分配位
 
 //Give block ptr bp,compute address of its header and footer
+
 #define HDRP(bp) ((char *)(bp)-WSIZE)						//返回指向这个块儿头部指针
 #define FTRP(bp) ((char *)(bp)+GET_SIZE(HDRP(bp))-DSIZE)	//尾部
 
@@ -152,6 +153,7 @@ int mm_init(void)
 	PUT(heap_listp + (2*WSIZE), PACK(DSIZE, 1));			//序言块儿
 	PUT(heap_listp + (3*WSIZE), PACK(0,1));					//结尾块儿
 
+	heap_listp += 2*WSIZE;
 	/*Extend the empty heap eith a free block of CHUNKSIZE bytes*/
 	if(extend_heap(CHUNKSIZE/WSIZE) == NULL)
 		return -1;
@@ -258,17 +260,26 @@ int main(void)
 
 	size_t a=4;
 	int *bp;
-
+	int *m;
+	int *n;
 
 	mem_init();
 	mm_init();
+	printf("the heap = %p\n", mem_heap);
+	printf("listp=%p\n\n", heap_listp);
+	
 	bp=(int *)mm_malloc(a);
+	printf("bp=%p\n\n",bp);
 
-	if(bp==NULL){
-		printf("bp=NULL\n");
-		return 0;
-	}
-	*bp=20;
-	printf("%d\n", *bp);
+	
+	m=(int *)mm_malloc(a);
+	 mm_free(bp);
+
+	n=(int *)mm_malloc(a);
+	printf("n=%p\n",n);
+	printf("m=%p\n",m);
+
+
 	return 0;
+	
 }
